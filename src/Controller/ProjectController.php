@@ -31,8 +31,11 @@ class ProjectController
         try {
             $project = $this->storage->getProjectById($request->get('id'));
 
+            // мы возвращаем голую модель. Для таких случаев безопаснее превращать модель в dto,
+			// чтобы избавить от лишних данных или наполнить нужными
             return new Response($project->toJson());
         } catch (Model\NotFoundException $e) {
+        	// Неправильное решение использовать для 404 вариант с исключением. Ситуация вполне штатная
             return new Response('Not found', 404);
         } catch (\Throwable $e) {
             return new Response('Something went wrong', 500);
@@ -46,12 +49,15 @@ class ProjectController
      */
     public function projectTaskPagerAction(Request $request)
     {
+    	// никак не обрабатываются исключения, также как и проверка на существование значений.
+		// судя по роутингу, limit и offset сюда не попадут
         $tasks = $this->storage->getTasksByProjectId(
             $request->get('id'),
             $request->get('limit'),
             $request->get('offset')
         );
 
+        // аналогичная ситуация, что и в методе выше. Нужно использовать dto
         return new Response(json_encode($tasks));
     }
 
@@ -66,7 +72,8 @@ class ProjectController
 		if (!$project) {
 			return new JsonResponse(['error' => 'Not found']);
 		}
-		
+		// Лучше использовать промежуточную форму для подготовки данных для вставки
+		// Кстати, форма подойдёт для валидации входящих данных
 		return new JsonResponse(
 			$this->storage->createTask($_REQUEST, $project->getId())
 		);
